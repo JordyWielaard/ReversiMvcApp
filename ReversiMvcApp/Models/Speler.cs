@@ -14,5 +14,6 @@ namespace ReversiMvcApp.Models
         public int AantalGewonnen { get; set; }
         public int AantalVerloren { get; set; }
         public int AantalGelijk { get; set; }
+        
     }
 }

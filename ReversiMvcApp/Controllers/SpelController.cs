@@ -82,7 +82,15 @@ namespace ReversiMvcApp.Controllers
             {
                 var responseBody = responseMessage.Content.ReadAsStringAsync().Result;
                 var respone = JsonConvert.DeserializeObject<Spel>(responseBody);
-                return View(respone);
+                if (respone.Finished)
+                {
+                    return RedirectToAction("Edit", "Spel", new { id = CheckForGame().Token });
+                }
+                else
+                {
+                    return View(respone);
+                }
+                
             }
             return View();
         }
