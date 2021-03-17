@@ -1,8 +1,7 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ReversiMvcApp.Models
 {
@@ -14,6 +13,19 @@ namespace ReversiMvcApp.Models
         public int AantalGewonnen { get; set; }
         public int AantalVerloren { get; set; }
         public int AantalGelijk { get; set; }
-        
+        public string SpelerRol { get; set; }
+
+        [NotMapped]
+        public List<SelectListItem> Rollen { get; } = new List<SelectListItem>
+        {
+            new SelectListItem{ Value = "beheerder", Text = "beheerder" },
+            new SelectListItem{ Value = "mediator", Text = "mediator" },
+            new SelectListItem{ Value = "speler", Text = "speler" }
+        };
+
+        public Speler()
+        {
+        }
+
     }
 }

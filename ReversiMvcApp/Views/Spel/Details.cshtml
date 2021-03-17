@@ -3,19 +3,7 @@
 @{
     ViewData["Title"] = "Details";
 }
-<section id="feedback" class="alert alert-success fadeIn" role="alert">
-    <div class="exitIcon">
-        <i class="fas fa-times fa-3x"></i>
-    </div>
-    <div class="textColorGray leftDiv">
-        <i class="fas fa-check fa-2x iconVisable"></i>
-        <p class="textSize">Mike wil deelnemen aan jouw spel. Geef akkoord.</p>
-    </div>
-    <div class="rightDiv">
-        <button class="button1 button-bibber" type="button">Akkoord</button>
-        <button class="button1" type="button">Weigeren</button>
-    </div>
-</section>
+
 <h1>Details</h1>
 
 <div>
@@ -35,10 +23,10 @@
             @Html.DisplayFor(model => model.Speler1Token)
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Speker2Token)
+            @Html.DisplayNameFor(model => model.Speler2Token)
         </dt>
         <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Speker2Token)
+            @Html.DisplayFor(model => model.Speler2Token)
         </dd>
         <dt class = "col-sm-2">
             @Html.DisplayNameFor(model => model.Omschrijving)

@@ -11,7 +11,7 @@ using ReversiMvcApp.Models;
 
 namespace ReversiMvcApp.Controllers
 {
-    [Authorize]
+    [Authorize(Roles ="beheerder")]
     public class SpelersController : Controller
     {
         private readonly ReversiDbContext _context;

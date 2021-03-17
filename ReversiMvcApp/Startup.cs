@@ -32,10 +32,11 @@ namespace ReversiMvcApp
                 options.UseSqlServer(
                     Configuration.GetConnectionString("DefaultConnection")));
             services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+                .AddRoles<IdentityRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>();
             services.AddDbContext<ReversiDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("ReversiDatabase")));
             services.AddControllersWithViews();
-            services.AddRazorPages();
+  
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
