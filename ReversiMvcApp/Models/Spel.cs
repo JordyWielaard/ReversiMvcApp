@@ -11,12 +11,12 @@ namespace ReversiMvcApp.Models
         public int Id { get; set; }
         public string Token { get; set; }
         public string Speler1Token { get; set; }
-        public string Speker2Token { get; set; }
+        public string Speler2Token { get; set; }
         public string Omschrijving { get; set; }
         public string Winnaar { get; set; }
         public bool Finished { get; set; }
         [NotMapped]
-        public string[] Bord { get; set; }
+        public string Bord { get; set; }
 
         public Spel()
         {

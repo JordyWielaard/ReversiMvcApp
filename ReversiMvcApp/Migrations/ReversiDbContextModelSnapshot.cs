@@ -65,6 +65,9 @@ namespace ReversiMvcApp.Migrations
                     b.Property<string>("Naam")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("SpelerRol")
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Guid");
 
                     b.ToTable("Spelers");

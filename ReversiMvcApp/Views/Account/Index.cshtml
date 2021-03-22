@@ -1,0 +1,56 @@
+﻿@model IEnumerable<ReversiMvcApp.Models.Speler>
+
+@{
+    ViewData["Title"] = "Account beheer";
+}
+
+<h1>Account beheer</h1>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Naam)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.AantalGewonnen)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.AantalVerloren)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.AantalGelijk)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.SpelerRol)
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Naam)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.AantalGewonnen)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.AantalVerloren)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.AantalGelijk)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.SpelerRol)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.Guid">Edit</a> |
+                <a asp-action="Delete" asp-route-id="@item.Guid">Delete</a> |
+                <a asp-action="AdminResetPassword" asp-route-id="@item.Guid">Reset</a>
+            </td>
+        </tr>
+        }
+    </tbody>
+</table>
