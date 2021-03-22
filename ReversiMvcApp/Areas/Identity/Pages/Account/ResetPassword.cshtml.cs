@@ -74,6 +74,7 @@ namespace ReversiMvcApp.Areas.Identity.Pages.Account
                 return RedirectToPage("./ResetPasswordConfirmation");
             }
 
+            //_userManager.GeneratePasswordResetTokenAsync(user); vervangt input.code
             var result = await _userManager.ResetPasswordAsync(user, Input.Code, Input.Password);
             if (result.Succeeded)
             {

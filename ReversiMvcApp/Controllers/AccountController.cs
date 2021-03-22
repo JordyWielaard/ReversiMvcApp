@@ -5,31 +5,46 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ReversiMvcApp.Data;
 using ReversiMvcApp.Models;
+using System;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Net.Http;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace ReversiMvcApp.Controllers
 {
+    [Authorize(Roles = "Beheerder,Mediator")]
     public class AccountController : Controller
     {
 
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly UserManager<IdentityUser> _userManager;
+        private readonly SignInManager<IdentityUser> _signInManager;
         private readonly ReversiDbContext _context;
 
-        public AccountController(RoleManager<IdentityRole> roleManager, UserManager<IdentityUser> userManager, ReversiDbContext context)
+        private string requestUri = "https://localhost:44346";
+        private HttpClient client;
+        private HttpResponseMessage responseMessage;
+
+        public AccountController(RoleManager<IdentityRole> roleManager, UserManager<IdentityUser> userManager, ReversiDbContext context, SignInManager<IdentityUser> signInManager)
         {
             _roleManager = roleManager;
             _userManager = userManager;
+            _signInManager = signInManager;
             _context = context;
+
+            client = new HttpClient();
+            client.BaseAddress = new Uri(requestUri);
+            client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
         }
 
         private bool SpelerExists(string id)
         {
             return _context.Spelers.Any(e => e.Guid == id);
         }
-        [Authorize(Roles = "beheerder,mediator")]
+
+
         // GET: AccountController
         public async Task<ActionResult> Index()
         {
@@ -63,9 +78,10 @@ namespace ReversiMvcApp.Controllers
             }
         }
 
+        [Authorize(Roles = "Beheerder")]
         // GET: AccountController/Edit/5
         // GET: Spelers/Edit/5
-        [Authorize(Roles = "beheerder")]
+        [Authorize(Roles = "Beheerder")]
         public async Task<IActionResult> Edit(string id)
         {
             if (id == null)
@@ -84,7 +100,7 @@ namespace ReversiMvcApp.Controllers
         // POST: Account/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "beheerder")]
+        [Authorize(Roles = "Beheerder")]
         public async Task<ActionResult> EditAsync(string id, [Bind("Guid,Naam,AantalGewonnen,AantalVerloren,AantalGelijk,SpelerRol")] Speler speler)
         {
             if (ModelState.IsValid)
@@ -97,7 +113,6 @@ namespace ReversiMvcApp.Controllers
                     var roles = await _userManager.GetRolesAsync(user);
                     //Remove all roles from user
                     await _userManager.RemoveFromRolesAsync(user, roles.ToArray());
-
                     //Add new role to user
                     await _userManager.AddToRoleAsync(user, speler.SpelerRol);
 
@@ -116,25 +131,47 @@ namespace ReversiMvcApp.Controllers
             return View(speler);
         }
 
-        // GET: AccountController/Delete/5
-        public ActionResult Delete(int id)
+        // GET: Spelers/Delete/5
+        public async Task<IActionResult> Delete(string id)
         {
-            return View();
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var speler = await _context.Spelers
+                .FirstOrDefaultAsync(m => m.Guid == id);
+            if (speler == null)
+            {
+                return NotFound();
+            }
+
+            return View(speler);
         }
 
-        // POST: AccountController/Delete/5
-        [HttpPost]
+        // POST: Spelers/Delete/5
+        [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
+        public async Task<IActionResult> DeleteConfirmed(string id)
         {
-            try
+            var speler = await _context.Spelers.FindAsync(id);
+            
+            string apiUri = "api/spel/" + speler.Guid + "";
+            HttpResponseMessage responseMessage = await client.DeleteAsync(apiUri);
+            if (responseMessage.IsSuccessStatusCode)
             {
-                return RedirectToAction(nameof(Index));
+                _context.Spelers.Remove(speler);
+                await _context.SaveChangesAsync();
+
+                var user = await _userManager.FindByIdAsync(id);
+                //Get all roles from user
+                var roles = await _userManager.GetRolesAsync(user);
+                //Remove all roles from user
+                await _userManager.RemoveFromRolesAsync(user, roles.ToArray());
+                await _userManager.DeleteAsync(user);
             }
-            catch
-            {
-                return View();
-            }
+
+            return RedirectToAction(nameof(Index));
         }
     }
 }

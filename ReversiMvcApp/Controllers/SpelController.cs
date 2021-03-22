@@ -18,7 +18,7 @@ namespace ReversiMvcApp.Controllers
 
 
 
-    [Authorize]
+    [Authorize(Roles = "Beheerder,Mediator,Speler")]
     public class SpelController : Controller
     {
 
@@ -68,7 +68,7 @@ namespace ReversiMvcApp.Controllers
         // GET: SpelController
         public ActionResult Index()
         {
-            _logger.LogInformation($"Spel pagina index");
+            //_logger.LogInformation($"Spel pagina index");
             if (CheckForGame() != null)
             {
                 return RedirectToAction("Details", "Spel", new { id = CheckForGame().Token });
@@ -105,7 +105,7 @@ namespace ReversiMvcApp.Controllers
                 {
                     return RedirectToAction("Details", "Spel", new { id = CheckForGame().Token });
                 }
-                else if (respone.Speler2Token == null  && respone.Speler1Token != currentUserID)
+                else if (respone.Speler2Token == ""  && respone.Speler1Token != currentUserID)
                 {
                     string GameApiUri = "api/spel/spelertoevoegen";
                     

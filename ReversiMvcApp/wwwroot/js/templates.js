@@ -6,15 +6,8 @@ Handlebars.registerPartial("fiche", Handlebars.template({"compiler":[8,">= 4.3.0
 this["spa_templates"] = this["spa_templates"] || {};
 this["spa_templates"]["templates"] = this["spa_templates"]["templates"] || {};
 this["spa_templates"]["templates"]["api"] = Handlebars.template({"compiler":[8,">= 4.3.0"],"main":function(container,depth0,helpers,partials,data) {
-    var helper, lookupProperty = container.lookupProperty || function(parent, propertyName) {
-        if (Object.prototype.hasOwnProperty.call(parent, propertyName)) {
-          return parent[propertyName];
-        }
-        return undefined
-    };
-
-  return "<img src=\""
-    + container.escapeExpression(((helper = (helper = lookupProperty(helpers,"imgUrl") || (depth0 != null ? lookupProperty(depth0,"imgUrl") : depth0)) != null ? helper : container.hooks.helperMissing),(typeof helper === "function" ? helper.call(depth0 != null ? depth0 : (container.nullContext || {}),{"name":"imgUrl","hash":{},"data":data,"loc":{"start":{"line":1,"column":10},"end":{"line":1,"column":20}}}) : helper)))
+    return "<img src=\""
+    + container.escapeExpression(container.lambda(depth0, depth0))
     + "\"></img>";
 },"useData":true});
 this["spa_templates"]["templates"]["body"] = Handlebars.template({"compiler":[8,">= 4.3.0"],"main":function(container,depth0,helpers,partials,data) {

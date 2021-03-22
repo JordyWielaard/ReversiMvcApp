@@ -18,9 +18,9 @@ namespace ReversiMvcApp.Models
         [NotMapped]
         public List<SelectListItem> Rollen { get; } = new List<SelectListItem>
         {
-            new SelectListItem{ Value = "beheerder", Text = "beheerder" },
-            new SelectListItem{ Value = "mediator", Text = "mediator" },
-            new SelectListItem{ Value = "speler", Text = "speler" }
+            new SelectListItem{ Value = "Beheerder", Text = "Beheerder" },
+            new SelectListItem{ Value = "Mediator", Text = "Mediator" },
+            new SelectListItem{ Value = "Speler", Text = "Speler" }
         };
 
         public Speler()
