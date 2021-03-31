@@ -1,0 +1,15 @@
+﻿@model ReversiMvcApp.Models.ResetAuthenticator
+<h1>Reset Authenticator</h1>
+
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="ResetAuthenticator">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Guid" />
+            <div class="form-group">
+                <input type="submit" value="Reset Authenticator" class="btn btn-primary" /> |
+                <a asp-action="Index">Back to List</a>
+            </div>
+        </form>
+    </div>
+</div>

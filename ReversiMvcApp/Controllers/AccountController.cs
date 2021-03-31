@@ -3,8 +3,10 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using ReversiMvcApp.Data;
 using ReversiMvcApp.Models;
+using ReversiMvcApp.Services;
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -22,21 +24,20 @@ namespace ReversiMvcApp.Controllers
         private readonly UserManager<IdentityUser> _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly ReversiDbContext _context;
+        private readonly ILogger<AccountController> _logger;
+        private readonly Helper _helper = new Helper();
 
-        private string requestUri = "https://localhost:44346";
-        private HttpClient client;
-        private HttpResponseMessage responseMessage;
 
-        public AccountController(RoleManager<IdentityRole> roleManager, UserManager<IdentityUser> userManager, ReversiDbContext context, SignInManager<IdentityUser> signInManager)
+        private HttpClient _client;
+
+        public AccountController(RoleManager<IdentityRole> roleManager, UserManager<IdentityUser> userManager, ReversiDbContext context, SignInManager<IdentityUser> signInManager, ILogger<AccountController> logger)
         {
             _roleManager = roleManager;
             _userManager = userManager;
             _signInManager = signInManager;
             _context = context;
-
-            client = new HttpClient();
-            client.BaseAddress = new Uri(requestUri);
-            client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+            _logger = logger;
+            _client = _helper.ClientInit();
         }
 
         private bool SpelerExists(string id)
@@ -109,11 +110,11 @@ namespace ReversiMvcApp.Controllers
                 {
                     var user = await _userManager.FindByIdAsync(id);
 
-                    //Get all roles from user
+                    //Haal alle rolen op van gebruiker
                     var roles = await _userManager.GetRolesAsync(user);
-                    //Remove all roles from user
+                    //Verwijder alle rolen van gebruiker
                     await _userManager.RemoveFromRolesAsync(user, roles.ToArray());
-                    //Add new role to user
+                    //Voeg nieuwe rol toe aan gebruiker
                     await _userManager.AddToRoleAsync(user, speler.SpelerRol);
 
                     var spelerupdate = await _context.Spelers.FirstOrDefaultAsync(s => s.Guid == speler.Guid);
@@ -122,6 +123,7 @@ namespace ReversiMvcApp.Controllers
                     spelerupdate.AantalGewonnen = speler.AantalGewonnen;
                     spelerupdate.AantalGelijk = speler.AantalGelijk;
                     await _context.SaveChangesAsync();
+                    _logger.LogInformation($"Gebruiker {this.User.Identity.Name} heeft de rol van {speler.Naam} aangepast vanaf IP {HttpContext.Connection.RemoteIpAddress} om {DateTime.Now}");
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -157,21 +159,119 @@ namespace ReversiMvcApp.Controllers
             var speler = await _context.Spelers.FindAsync(id);
             
             string apiUri = "api/spel/" + speler.Guid + "";
-            HttpResponseMessage responseMessage = await client.DeleteAsync(apiUri);
+            HttpResponseMessage responseMessage = await _client.DeleteAsync(apiUri);
             if (responseMessage.IsSuccessStatusCode)
             {
                 _context.Spelers.Remove(speler);
                 await _context.SaveChangesAsync();
-
+                //Haal alle rolen op van gebruiker
                 var user = await _userManager.FindByIdAsync(id);
-                //Get all roles from user
+                //Verwijder alle rolen van gebruiker
                 var roles = await _userManager.GetRolesAsync(user);
-                //Remove all roles from user
+                //Remove alle rolen van user
                 await _userManager.RemoveFromRolesAsync(user, roles.ToArray());
                 await _userManager.DeleteAsync(user);
+                _logger.LogInformation($"Gebruiker {this.User.Identity.Name} heeft account van {speler.Naam} verwijderd vanaf IP {HttpContext.Connection.RemoteIpAddress} om {DateTime.Now}");
             }
 
             return RedirectToAction(nameof(Index));
+        }
+
+
+        [HttpGet]
+        public async Task<IActionResult> ChangePassword(string guid)
+        {
+            if (guid == null)
+            {
+                return NotFound();
+            }
+
+            var speler = await _context.Spelers.FirstOrDefaultAsync(m => m.Guid == guid);
+            if (speler == null)
+            {
+                return NotFound();
+            }
+
+            ChangePassword changePassword = new ChangePassword()
+            {
+                Guid = guid
+            };
+            return View(changePassword);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangePassword(ChangePassword changePassword)
+        {
+            var speler = await _userManager.FindByIdAsync(changePassword.Guid);
+            
+            if (ModelState.IsValid)
+            {
+                var token = await _userManager.GeneratePasswordResetTokenAsync(speler);
+                IdentityResult passwordChangeResult = await _userManager.ResetPasswordAsync(speler, token, changePassword.NewPassword);
+                if (passwordChangeResult.Succeeded)
+                {
+                    
+                    _logger.LogInformation($"Gebruiker {this.User.Identity.Name} heeft het wachtwoord aangepast van {speler.Email} vanaf IP {HttpContext.Connection.RemoteIpAddress} om {DateTime.Now}");
+                    return RedirectToAction(nameof(Index));
+                }
+                else
+                {
+                    _logger.LogInformation($"Gebruiker {this.User.Identity.Name} heeft geprobeerd het wachtwoord aangepast van {speler.Email} vanaf IP {HttpContext.Connection.RemoteIpAddress} om {DateTime.Now}");
+                    ModelState.AddModelError("NewPassword", "Invalid Password");
+                    ModelState.AddModelError("NewPasswordConfirm", "Invalid Password");
+                    return View();
+                }
+            }
+            else
+            {
+                return View();
+            }
+            
+        }
+
+
+
+
+        [HttpGet]
+        public async Task<IActionResult> ResetAuthenticator(string guid)
+        {
+            if (guid == null)
+            {
+                return NotFound();
+            }
+
+            var speler = await _context.Spelers.FirstOrDefaultAsync(m => m.Guid == guid);
+            if (speler == null)
+            {
+                return NotFound();
+            }
+
+            ResetAuthenticator resetAuthenticator = new ResetAuthenticator()
+            {
+                Guid = guid
+            };
+            return View(resetAuthenticator);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetAuthenticator(ResetAuthenticator resetAuthenticator)
+        {
+            var speler = await _userManager.FindByIdAsync(resetAuthenticator.Guid);
+            if (speler.TwoFactorEnabled)
+            {
+                if (ModelState.IsValid)
+                {
+                    await _userManager.ResetAuthenticatorKeyAsync(speler);
+                    await _userManager.SetTwoFactorEnabledAsync(speler, false);
+                }
+                return View();
+            }
+            else
+            {
+                return View();
+            }
         }
     }
 }

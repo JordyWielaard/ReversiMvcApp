@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ReversiMvcApp.Services;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
@@ -14,13 +15,15 @@ namespace ReversiMvcApp.Models
         public string Speler2Token { get; set; }
         public string Omschrijving { get; set; }
         public string Winnaar { get; set; }
-        public bool Finished { get; set; }
+        public bool Afgelopen { get; set; }
         [NotMapped]
         public string Bord { get; set; }
+        [NotMapped]
+        public string CurrentUser { get; set; }
+
 
         public Spel()
         {
-
         }
 
         public Spel(string speler1Token, string omschrijving)

@@ -48,7 +48,8 @@
             <td>
                 <a asp-action="Edit" asp-route-id="@item.Guid">Edit</a> |
                 <a asp-action="Delete" asp-route-id="@item.Guid">Delete</a> |
-                <a asp-action="AdminResetPassword" asp-route-id="@item.Guid">Reset</a>
+                <a asp-action="ChangePassword" asp-route-guid="@item.Guid">Reset Wachtwoord</a> |
+                <a asp-action="ResetAuthenticator" asp-route-guid="@item.Guid">Reset Authenticator</a>
             </td>
         </tr>
         }

@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using ReversiMvcApp.Data;
 using ReversiMvcApp.Models;
+using ReversiMvcApp.Services;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -16,22 +17,13 @@ namespace ReversiMvcApp.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
         private readonly ReversiDbContext _reversiDbContext;
-        private readonly UserManager<IdentityUser> _userManager;
 
-        private string requestUri = "https://localhost:44346";
-        private HttpClient client;
+        private readonly Helper _helper = new Helper();
 
-        public HomeController(ILogger<HomeController> logger, ReversiDbContext reversiDbContext, UserManager<IdentityUser> userManager)
+        public HomeController( ReversiDbContext reversiDbContext)
         {
-            _logger = logger;
             _reversiDbContext = reversiDbContext;
-            _userManager = userManager;
-
-            client = new HttpClient();
-            client.BaseAddress = new Uri(requestUri);
-            client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
         }
 
         public async Task<IActionResult> Index()
@@ -48,35 +40,15 @@ namespace ReversiMvcApp.Controllers
                     await _reversiDbContext.SaveChangesAsync();
                 }
 
-                if (CheckForGame() != null)
+                if (_helper.CheckVoorSpel(this.User) != null)
                 {
-                    return RedirectToAction("Details", "Spel", new { id = CheckForGame().Token });
+                    return RedirectToAction("Details", "Spel", new { id = _helper.CheckVoorSpel(this.User).Token });
                 }
                 return RedirectToAction("Index", "Spel");
             }
             return View();
         }
 
-        public Spel CheckForGame()
-        {
-            ClaimsPrincipal currentUser = this.User;
-            var currentUserID = currentUser.FindFirst(ClaimTypes.NameIdentifier).Value;
-            string apiUri = "api/spel/speler/" + currentUserID;
-            HttpResponseMessage responseMessage = client.GetAsync(apiUri).Result;
-            if (responseMessage.IsSuccessStatusCode)
-            {
-                var responseBody = responseMessage.Content.ReadAsStringAsync().Result;
-                var respone = JsonConvert.DeserializeObject<Spel>(responseBody);
-                if (respone != null)
-                {
-                    if (!respone.Finished)
-                    {
-                        return respone;
-                    }
-                }              
-            }
-            return null;
-        }
 
         public IActionResult Privacy()
         {

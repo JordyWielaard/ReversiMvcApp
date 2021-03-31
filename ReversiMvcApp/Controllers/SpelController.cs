@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using ReversiMvcApp.Data;
 using ReversiMvcApp.Models;
+using ReversiMvcApp.Services;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -21,62 +22,30 @@ namespace ReversiMvcApp.Controllers
     [Authorize(Roles = "Beheerder,Mediator,Speler")]
     public class SpelController : Controller
     {
-
-        private readonly ILogger<SpelController> _logger;
         private readonly ReversiDbContext _reversiDbContext;
-
-        private string requestUri = "https://localhost:44346";
-        private HttpClient client;
+        private readonly Helper _helper = new Helper();
+        private HttpClient _client;
 
         public SpelController(ILogger<SpelController> logger, ReversiDbContext reversiDbContext)
         {
-            _logger = logger;
             _reversiDbContext = reversiDbContext;
-
-            client = new HttpClient();
-            client.BaseAddress = new Uri(requestUri);
-            client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+            _client = _helper.ClientInit();
         }
         
-        
-
-        public Spel CheckForGame()
-        {
-            if (User.Identity.IsAuthenticated)
-            {
-                ClaimsPrincipal currentUser = this.User;
-                var currentUserID = currentUser.FindFirst(ClaimTypes.NameIdentifier).Value;
-                string apiUri = "api/spel/speler/" + currentUserID;
-                HttpResponseMessage responseMessage = client.GetAsync(apiUri).Result;
-                if (responseMessage.IsSuccessStatusCode)
-                {
-                    var responseBody = responseMessage.Content.ReadAsStringAsync().Result;
-                    var respone = JsonConvert.DeserializeObject<Spel>(responseBody);
-                    if (respone != null)
-                    {
-                        if (!respone.Finished)
-                        {
-                            return respone;
-                        }
-                    }
-                }
-            }
-            return null;
-        }
+       
 
 
         // GET: SpelController
         public ActionResult Index()
-        {
-            //_logger.LogInformation($"Spel pagina index");
-            if (CheckForGame() != null)
+        {           
+            if (_helper.CheckVoorSpel(this.User) != null)
             {
-                return RedirectToAction("Details", "Spel", new { id = CheckForGame().Token });
+                return RedirectToAction("Details", "Spel", new { id = _helper.CheckVoorSpel(this.User).Token });
             }
             else
             {
                 string apiUri = "api/spel";
-                HttpResponseMessage responseMessage = client.GetAsync(apiUri).Result;
+                HttpResponseMessage responseMessage = _client.GetAsync(apiUri).Result;
                 if (responseMessage.IsSuccessStatusCode)
                 {
                     var responseBody = responseMessage.Content.ReadAsStringAsync().Result;
@@ -91,38 +60,38 @@ namespace ReversiMvcApp.Controllers
         // GET: SpelController/Details/5
         public ActionResult Details(string id)
         {
-            ClaimsPrincipal currentUser = this.User;
-            var currentUserID = currentUser.FindFirst(ClaimTypes.NameIdentifier).Value;
-
-            //Goed werkend maken
+            var currentUserID = _helper.CurrentUserId(this.User);
+            //Ophalen spel
             string apiUri = "api/spel/" + id;
-            HttpResponseMessage responseMessage = client.GetAsync(apiUri).Result;
+            HttpResponseMessage responseMessage = _client.GetAsync(apiUri).Result;
             if (responseMessage.IsSuccessStatusCode)
             {
                 var responseBody = responseMessage.Content.ReadAsStringAsync().Result;
                 var respone = JsonConvert.DeserializeObject<Spel>(responseBody);
-                if (respone.Finished)
+                respone.CurrentUser = currentUserID;
+                //als het spel al is afgelopen wordt de speler terug verwezen naar de lijst met spellen
+                if (respone.Afgelopen)
                 {
-                    return RedirectToAction("Details", "Spel", new { id = CheckForGame().Token });
+                    return RedirectToAction(nameof(Index));
                 }
-                else if (respone.Speler2Token == ""  && respone.Speler1Token != currentUserID)
+                if (respone.Speler2Token == ""  && respone.Speler1Token != currentUserID)
                 {
                     string GameApiUri = "api/spel/spelertoevoegen";
                     
-                    var responseUpdate = client.PutAsJsonAsync(GameApiUri, new JoinGame() { SpelerToken = currentUserID , SpelToken = respone.Token } ).Result;
+                    var responseUpdate = _client.PutAsJsonAsync(GameApiUri, new JoinGame() { SpelerToken = currentUserID , SpelToken = respone.Token } ).Result;
                     return View(respone);
                 }
                 return View(respone);
             }
-            return View();
+            return RedirectToAction(nameof(Index));
         }
 
         // GET: SpelController/Create
         public ActionResult Create()
         {
-            if (CheckForGame() != null)
+            if (_helper.CheckVoorSpel(this.User) != null)
             {
-                return RedirectToAction("Details", "Spel", new { id = CheckForGame().Token });
+                return RedirectToAction("Details", "Spel", new { id = _helper.CheckVoorSpel(this.User).Token });
             }
             return View();
         }
@@ -133,16 +102,15 @@ namespace ReversiMvcApp.Controllers
         public ActionResult Create([Bind("Omschrijving")] Spel spel)
         {
             ClaimsPrincipal currentUser = this.User;
-            var currentUserID = currentUser.FindFirst(ClaimTypes.NameIdentifier).Value;
-            if (CheckForGame() != null)
+            if (_helper.CheckVoorSpel(this.User) != null)
             {
-                return RedirectToAction("Details", "Spel", new { id = CheckForGame().Token });
+                return RedirectToAction("Details", "Spel", new { id = _helper.CheckVoorSpel(this.User).Token });
             }
             else if (ModelState.IsValid)
             {
                 spel.Speler1Token = currentUser.FindFirst(ClaimTypes.NameIdentifier).Value;
                 string GameApiUri = "api/spel";
-                var response = client.PostAsJsonAsync(GameApiUri, spel).Result;
+                var response = _client.PostAsJsonAsync(GameApiUri, spel).Result;
                 return RedirectToAction(nameof(Index));
             }
             return View();

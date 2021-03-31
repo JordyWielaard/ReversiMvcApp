@@ -26,6 +26,9 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Spel" asp-action="Index">Spellen</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Spelers" asp-action="Index">Rankings</a>
+                        </li>
                         @if (User.IsInRole("Beheerder") || User.IsInRole("Mediator"))
                         {
                             <li class="nav-item">
@@ -52,8 +55,6 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/lib/qrcode.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
-    <script src="~/js/templates.js" asp-append-version="true"></script>
-    <script src="~/js/app.js" asp-append-version="true"></script>
     @RenderSection("Scripts", required: false)
 </body>
 </html>
