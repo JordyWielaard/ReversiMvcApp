@@ -158,6 +158,7 @@ namespace ReversiMvcApp.Controllers
         {
             var speler = await _context.Spelers.FindAsync(id);
             
+            //Delete spellen van speler uit api db
             string apiUri = "api/spel/" + speler.Guid + "";
             HttpResponseMessage responseMessage = await _client.DeleteAsync(apiUri);
             if (responseMessage.IsSuccessStatusCode)
@@ -204,11 +205,14 @@ namespace ReversiMvcApp.Controllers
         public async Task<IActionResult> ChangePassword(ChangePassword changePassword)
         {
             var speler = await _userManager.FindByIdAsync(changePassword.Guid);
-            
+            //Check modelstate
             if (ModelState.IsValid)
             {
+                //Genereer een wachtwoord reset token voor de user
                 var token = await _userManager.GeneratePasswordResetTokenAsync(speler);
+                //verander het wachtwoord van de speler
                 IdentityResult passwordChangeResult = await _userManager.ResetPasswordAsync(speler, token, changePassword.NewPassword);
+                //Check of wachtwoord succesvol is aangepast
                 if (passwordChangeResult.Succeeded)
                 {
                     
@@ -259,10 +263,12 @@ namespace ReversiMvcApp.Controllers
         public async Task<IActionResult> ResetAuthenticator(ResetAuthenticator resetAuthenticator)
         {
             var speler = await _userManager.FindByIdAsync(resetAuthenticator.Guid);
+            //Kijk of gebruiker 2FA heeft
             if (speler.TwoFactorEnabled)
             {
                 if (ModelState.IsValid)
                 {
+                    //Verwijder 2FA van gebruiker
                     await _userManager.ResetAuthenticatorKeyAsync(speler);
                     await _userManager.SetTwoFactorEnabledAsync(speler, false);
                 }

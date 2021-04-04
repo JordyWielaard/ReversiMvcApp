@@ -30,6 +30,7 @@ namespace ReversiMvcApp.Controllers
         // GET: Spelers
         public async Task<IActionResult> Index()
         {
+            //haal alle spelers op en zet alles naar 0
             var spelers = await _context.Spelers.ToListAsync();
             foreach (var speler in spelers)
             {
@@ -37,11 +38,13 @@ namespace ReversiMvcApp.Controllers
                 speler.AantalGewonnen = 0;
                 speler.AantalVerloren = 0;
             }
+            //haal alle resultaten van het spel op
             string apiUri = "api/Spel/AfgelopenSpellen";
             List<Speler> spelerupdate = new List<Speler>();
             HttpResponseMessage responseMessage = await _client.GetAsync(apiUri);
             if (responseMessage.IsSuccessStatusCode)
             {
+                //Update alle scores
                 var responseBody = await responseMessage.Content.ReadAsStringAsync();
                 List <Spel> respone = JsonConvert.DeserializeObject<List<Spel>>(responseBody);
                 foreach (var spel in respone)
@@ -72,6 +75,7 @@ namespace ReversiMvcApp.Controllers
                 _context.Spelers.UpdateRange(spelers);
                 await _context.SaveChangesAsync();
             }
+            //return de rankings eerst meest gewonnen dan 
             return View(spelers.OrderByDescending(s => s.AantalGewonnen).ThenByDescending(s => s.AantalGelijk).ThenBy(s => s.AantalVerloren));
         }
 

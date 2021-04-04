@@ -31,13 +31,11 @@ namespace ReversiMvcApp.Controllers
             _reversiDbContext = reversiDbContext;
             _client = _helper.ClientInit();
         }
-        
-       
-
-
+           
         // GET: SpelController
         public ActionResult Index()
         {           
+            //Check of speler al een spel heeft zo ja ga naar dat spel anders haal lijst met spellen op
             if (_helper.CheckVoorSpel(this.User) != null)
             {
                 return RedirectToAction("Details", "Spel", new { id = _helper.CheckVoorSpel(this.User).Token });
@@ -74,10 +72,10 @@ namespace ReversiMvcApp.Controllers
                 {
                     return RedirectToAction(nameof(Index));
                 }
+                //Als er geen speler 2 is en de huidige speler is niet speler 1 van dat spel voeg deze speler als speler2 toe en ga naar dat spel
                 if (respone.Speler2Token == ""  && respone.Speler1Token != currentUserID)
                 {
-                    string GameApiUri = "api/spel/spelertoevoegen";
-                    
+                    string GameApiUri = "api/spel/spelertoevoegen";                   
                     var responseUpdate = _client.PutAsJsonAsync(GameApiUri, new JoinGame() { SpelerToken = currentUserID , SpelToken = respone.Token } ).Result;
                     return View(respone);
                 }
@@ -108,6 +106,7 @@ namespace ReversiMvcApp.Controllers
             }
             else if (ModelState.IsValid)
             {
+                //maak een nieuw spel en post het naar de API
                 spel.Speler1Token = currentUser.FindFirst(ClaimTypes.NameIdentifier).Value;
                 string GameApiUri = "api/spel";
                 var response = _client.PostAsJsonAsync(GameApiUri, spel).Result;
